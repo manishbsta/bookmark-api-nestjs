@@ -1,9 +1,10 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { PrismaService } from '../src/prisma/prisma.service';
-import { AppModule } from '../src/app.module';
 import * as pactum from 'pactum';
+import { CreateBookmarkDto, EditBookmarkDto } from 'src/bookmark/dto';
+import { AppModule } from '../src/app.module';
 import { AuthDto } from '../src/auth/dto';
+import { PrismaService } from '../src/prisma/prisma.service';
 
 describe('App e2e', () => {
   let app: INestApplication;
@@ -110,17 +111,95 @@ describe('App e2e', () => {
     });
   });
 
-  // describe('Bookmarks', () => {
-  //   describe('Create Bookmark', () => {
-  //     it.todo('');
-  //   });
+  describe('Bookmarks', () => {
+    describe('Create Bookmark', () => {
+      const dto: CreateBookmarkDto = {
+        link: 'http://localhost:5556/',
+        title: 'Prisma Studio',
+        description:
+          'In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document or a typeface without relying on meaningful content.',
+      };
 
-  //   describe('Get Bookmark', () => {});
+      it('should create a bookmark', () => {
+        return pactum
+          .spec()
+          .post('/bookmarks')
+          .withBody(dto)
+          .withHeaders({
+            Authorization: 'Bearer $S{user_access_token}',
+          })
+          .stores('bookmark_id', 'id')
+          .expectStatus(201);
+      });
+    });
 
-  //   describe('Get Bookmark by Id', () => {});
+    describe('Get Bookmarks', () => {
+      it('should get bookmarks', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks')
+          .withHeaders({
+            Authorization: 'Bearer $S{user_access_token}',
+          })
+          .expectStatus(200)
+          .expectJsonLength(1);
+      });
+    });
 
-  //   describe('Edit Bookmark', () => {});
+    describe('Get Bookmark by Id', () => {
+      it('should get a bookmarks details', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks/$S{bookmark_id}')
+          .withHeaders({
+            Authorization: 'Bearer $S{user_access_token}',
+          })
+          .expectStatus(200)
+          .expectBodyContains('$S{bookmark_id}');
+      });
+    });
 
-  //   describe('Delete Bookmark', () => {});
-  // });
+    describe('Edit Bookmark', () => {
+      const dto: EditBookmarkDto = {
+        title: 'Lorem Ipsum',
+      };
+
+      it('should edit a bookmark', () => {
+        return pactum
+          .spec()
+          .patch('/bookmarks/{id}')
+          .withPathParams('id', '$S{bookmark_id}')
+          .withHeaders({
+            Authorization: 'Bearer $S{user_access_token}',
+          })
+          .withBody(dto)
+          .expectStatus(200)
+          .expectBodyContains(dto.title);
+      });
+    });
+
+    describe('Delete Bookmark', () => {
+      it('should delete a bookmark', () => {
+        return pactum
+          .spec()
+          .delete('/bookmarks/{id}')
+          .withPathParams('id', '$S{bookmark_id}')
+          .withHeaders({
+            Authorization: 'Bearer $S{user_access_token}',
+          })
+          .expectStatus(204);
+      });
+
+      it('should get empty bookmarks', () => {
+        return pactum
+          .spec()
+          .get('/bookmarks')
+          .withHeaders({
+            Authorization: 'Bearer $S{user_access_token}',
+          })
+          .expectStatus(200)
+          .expectJsonLength(0);
+      });
+    });
+  });
 });
