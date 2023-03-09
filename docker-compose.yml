@@ -10,5 +10,15 @@ services:
       POSTGRES_DB: bookmark
     networks:
       - manishbsta
+  test-db:
+    image: postgres:13
+    ports:
+      - 5435:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: bookmark
+    networks:
+      - manishbsta
 networks:
   manishbsta:
